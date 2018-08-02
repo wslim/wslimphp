@@ -1,6 +1,6 @@
 {
     "name": "wslim/wslimphp",
-    "type" : "php framework",
+    "type" : "library",
     "description": "Core libraries",
     "keywords": ["framework", "api", "micro"],
     "license": "MIT",
