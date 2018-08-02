@@ -1,10 +1,10 @@
 {
     "name": "wslim/wslimphp",
     "type" : "library",
-    "description": "Core libraries",
+    "description": "wslimphp core libraries",
     "keywords": ["framework", "api", "micro"],
     "license": "MIT",
-    "homepage" : "http://wslim.cn",
+    "homepage" : "https://github.com/wslim/wslimphp",
     "authors": [
         {
             "name" : "gwbnet",
