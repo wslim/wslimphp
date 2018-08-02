@@ -1,0 +1,39 @@
+{
+    "name": "wslim/wslimphp",
+    "type" : "php framework",
+    "description": "Core libraries",
+    "keywords": ["framework", "api", "micro"],
+    "license": "MIT",
+    "homepage" : "http://wslim.cn",
+    "authors": [
+        {
+            "name" : "gwbnet",
+            "email" : "gwbnet@126.com",
+            "homepage" : "https://wslim.cn"
+        }
+    ],
+    "require" : {
+        "php" : ">=5.5.0",
+        "psr/http-message" : "1.*",
+        "psr/log" : "~1.0",
+        "psr/cache" : "1.*",
+        "nikic/fast-route": "1.*",
+        "slim/http": ">=0.2"
+    },
+    "require-dev" : {
+        
+    },
+    "autoload": {
+        "psr-4" : {
+            "Wslim\\" : "src/"
+        },
+        "files" : [
+            
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            
+        }
+    }
+}
