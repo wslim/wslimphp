@@ -2,9 +2,9 @@
     "name": "wslim/wslimphp",
     "type" : "library",
     "description": "wslimphp core libraries",
-    "keywords": ["framework", "api", "micro"],
+    "keywords": ["framework", "wslimphp"],
     "license": "MIT",
-    "homepage" : "https://github.com/wslim/wslimphp",
+    "homepage" : "http://wslim.cn",
     "authors": [
         {
             "name" : "gwbnet",
@@ -33,7 +33,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            
+            "Wslim\\Tests\\": "tests/"
         }
     }
 }

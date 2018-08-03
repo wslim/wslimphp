@@ -1,0 +1,11 @@
+<?php
+namespace {namespace}\Model;
+
+use Wslim\Db\Model;
+
+class {name}Model extends Model
+{
+    protected $options = [
+        'table_name' => {name},
+    ];
+}
