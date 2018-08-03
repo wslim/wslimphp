@@ -49,7 +49,7 @@ class DefaultConfig
             'router'    => [
                 'url_mode'      => 0,   // 0 动态路径/index.php/article/show, 1 静态路径/article/show 必需项，会继承父级设置
                 'cache_file'    => $rootPath . 'storage/routes.cache.php',  // routes 缓存文件
-                'module_level'  => 1,   // module_level, 1|2
+                'module_level'  => 1,   // module_level, 1|2, 模块的深度，如果只支持一级设为1可提高解析性能
             ],
             
             // log

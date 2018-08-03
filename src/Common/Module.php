@@ -507,7 +507,7 @@ class Module extends Component
             }
             $handler = $handler ? $mhandler . '/' . $handler : $mhandler;
 	        
-	        Ioc::logger('route')->debug(sprintf('[%s][find-m]%s:%s', UriHelper::getRelativeUrl(), $module, $handler));
+	        Ioc::logger('router')->debug(sprintf('[%s][find-m]%s:%s', UriHelper::getRelativeUrl(), $module, $handler));
 	        
 	        if ($module && $moduleInstance = $this->getModule($module)) {
 	            return $moduleInstance->getController(null, $handler, $type);
@@ -524,7 +524,7 @@ class Module extends Component
 			$className  = Ioc::findClass($handler, $type, $namespace); 
 			$action = null; 
 			
-			Ioc::logger('route')->debug(sprintf('[%s][find-c]%s:%s', UriHelper::getRelativeUrl(), $this->getName(), $handler));
+			Ioc::logger('router')->debug(sprintf('[%s][find-c]%s:%s', UriHelper::getRelativeUrl(), $this->getName(), $handler));
 			
 			if (!$className) {
 			    if ($handler == 'index') {
@@ -533,7 +533,7 @@ class Module extends Component
 			    
 			    $indexClassName = Ioc::findClass($handler . '/index', $type, $namespace);
 			    
-			    Ioc::logger('route')->debug(sprintf('[%s][find-c]%s:%s', UriHelper::getRelativeUrl(), $this->getName(), $handler . '/index'));
+			    Ioc::logger('router')->debug(sprintf('[%s][find-c]%s:%s', UriHelper::getRelativeUrl(), $this->getName(), $handler . '/index'));
 			    
 			    if ($indexClassName) {
 					$handler    = $handler . '/index';
@@ -544,13 +544,13 @@ class Module extends Component
 				        $handler = substr($handler, 0, $pos); 
 				        $className  = Ioc::findClass($handler, $type, $namespace);
 				        
-				        Ioc::logger('route')->debug(sprintf('[%s][find-c]%s:%s', UriHelper::getRelativeUrl(), $this->getName(), $handler));
+				        Ioc::logger('router')->debug(sprintf('[%s][find-c]%s:%s', UriHelper::getRelativeUrl(), $this->getName(), $handler));
 				        
 				        if (!$className) {
 				            $handler .= '/index';
 				            $className = Ioc::findClass($handler, $type, $namespace);
 				            
-				            Ioc::logger('route')->debug(sprintf('[%s][find-c]%s:%s', UriHelper::getRelativeUrl(), $this->getName(), $handler));
+				            Ioc::logger('router')->debug(sprintf('[%s][find-c]%s:%s', UriHelper::getRelativeUrl(), $this->getName(), $handler));
 				            
 				            if (!$className) {
 				                return null;
@@ -561,7 +561,7 @@ class Module extends Component
 				        $handler = 'index';
 				        $className  = Ioc::findClass($handler, $type, $namespace);
 				        
-				        Ioc::logger('route')->debug(sprintf('[%s][find-c]%s:%s', UriHelper::getRelativeUrl(), $this->getName(), $handler));
+				        Ioc::logger('router')->debug(sprintf('[%s][find-c]%s:%s', UriHelper::getRelativeUrl(), $this->getName(), $handler));
 				        
 				        if (!$className) {
 				            return null;
