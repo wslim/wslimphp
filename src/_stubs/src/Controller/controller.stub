@@ -1,0 +1,62 @@
+<?php
+namespace {namespace}\Controller;
+
+use Wslim\Web\Controller;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
+
+class {name}{suffix} extends Controller
+{
+    /**
+     * 显示资源列表
+     *
+     * @return ResponseInterface
+     */
+    protected function index()
+    {
+        $this->responseData('title', 'WslimPhp');
+        $this->responseData('content', 'WslimPhp Demo');
+        
+        return $this->render();
+    }
+    
+    /**
+     * 显示创建资源表单页.
+     *
+     * @return ResponseInterface
+     */
+    public function doGetEdit()
+    {
+        //
+    }
+    
+    /**
+     * 保存新建的资源
+     *
+     * @return ResponseInterface
+     */
+    public function doPostEdit()
+    {
+        //
+    }
+    
+    /**
+     * 显示指定的资源
+     *
+     * @return ResponseInterface
+     */
+    public function doGetShow()
+    {
+        //
+    }
+    
+    /**
+     * 删除指定资源
+     *
+     * @return ResponseInterface
+     */
+    public function doPostDelete()
+    {
+        //
+    }
+}
