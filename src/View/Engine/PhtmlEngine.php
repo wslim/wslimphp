@@ -17,6 +17,21 @@ class PhtmlEngine implements EngineInterface
     }
     
     /**
+     * get layout from template content, if not set return null.
+     * @param  string $content
+     * @return string|NULL
+     */
+    public function getLayout(& $content)
+    {
+        //$res = preg_match("/\<\!-- php__layout\((.+)\) --\>/", $str, $match);
+        $res = preg_match("/\{layout\s+(.+)\}/", $content, $match);
+        if ($res) {
+            return str_replace(array('"', '\'', '.html'), '', $match[1]);
+        }
+        return null;
+    }
+    
+    /**
      * parse content to php code
      * @param string $str
      * @return string parsed content
@@ -59,7 +74,7 @@ class PhtmlEngine implements EngineInterface
         $str = preg_replace_callback("/\{\/widget[^}]*\}/i", array($this, 'end_widget_callback'), $str);
         
         // include sub template: {include 'header'}
-        $str = preg_replace_callback( "/\{(template|include)\s+(.+)\}/", array($this, 'parse_callback'), $str );
+        $str = preg_replace_callback( "/\{(template|include|layout)\s+(.+)\}/", array($this, 'parse_callback'), $str );
         
         // function or var: {function(...)} or {$data}
         $str = $this->parse_fun_var($str);
@@ -82,11 +97,14 @@ class PhtmlEngine implements EngineInterface
     	switch ($method) {
     	    case 'template':
     		case 'include':
-    			$content = 'include $this->template(' . $params . ')';
+    			$content = '<?php include $this->template(' . $params . '); ?>';
     			break;
+    		case 'layout':
+    		    $content = '<!-- php__layout(' . $params . ') -->';
+    		    break;
     	}
     	
-    	return isset($content) ? '<?php /* include: ' . $params . '*/ ' . $this->addquote($content) . "; ?>" : '';
+    	return isset($content) ? '' . $this->addquote($content) : '';
     }
     
     /**
@@ -136,6 +154,7 @@ class PhtmlEngine implements EngineInterface
     	$params_str = $matches[2];
         $in_matches = [];
     	preg_match_all("/([a-z_]+)\=[\"\']?([^\"\']+)[\"\']?/i", stripslashes($params_str), $in_matches, PREG_SET_ORDER);
+    	$params = null;
     	foreach($in_matches as $v) {
     		$params[$v[1]] = $v[2];
     	}

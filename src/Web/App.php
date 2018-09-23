@@ -62,13 +62,17 @@ class App extends BaseApp
 	 */
 	public function route(RequestInterface $request)
 	{
+	    /** @var Request $request */
+	    
 	    // set errorHandler ContentType
 	    Ioc::errorHandler()->setContentType($request->detectContentType());
 	    
-	    /** @var Request $request */
+	    // use origin uri to parsed
 	    $uri = $request->getUri();
 	    $uriPath   = $uri->getPath();
 	    $uriQuery  = $uri->getQuery();
+	    
+	    // omit query of path, if webserver `rewrite ^/(.*)$ /index.php?$1 last;`
 	    if (strpos('/' . $uriQuery . '&', $uriPath . '&') === 0) {
 	        $uri = $uri->withQuery(trim(str_replace($uriPath, '', '/' . $uriQuery), '&'));
 	        $request = $request->withUri($uri);
@@ -164,11 +168,24 @@ class App extends BaseApp
 	                    }
 	                }
 	                
-	                // get controller: first app then module
 	                $module = $this->getCurrentModule()->getName();
 	                $controller = trim($controller, '/');
 	                
-	                if (!$controller || ($module && strpos('/' . $controller . '/', '.' . $module . '/') !== 0) ) {
+	                // get controller: first current module, then app, then default module
+	                if ($module) {
+	                    // 这里controller是从原生uri解析的，在不使用二级域名时包含模块路径，将模块路径去掉
+	                    if ($controller && strpos(Config::getRootUrl(), $uri->getHost()) === false) {
+	                        $_wmodule  = '/' . $module . '/';
+	                        $_wmodule2 = $this->getCurrentModule()->getAlias();
+	                        $_wmodule2 = $_wmodule2 ? '/' . $_wmodule2 . '/' : '';
+	                        if (strpos('/' . $controller . '/', $_wmodule) === 0) {
+	                            $controller = substr_replace('/' . $controller . '/', '', 0, strlen($_wmodule));
+	                        } elseif ($_wmodule2 && strpos('/' . $controller . '/', $_wmodule2) === 0) {
+	                            $controller = substr_replace('/' . $controller . '/', '', 0, strlen($_wmodule2));
+	                        }
+	                        $controller = trim($controller, '/');
+	                    }
+	                    
 	                    $object = $this->getCurrentModule()->getController($controller);
 	                } else {
 	                    $object = $this->getController($controller);

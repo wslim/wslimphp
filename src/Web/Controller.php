@@ -2,14 +2,14 @@
 namespace Wslim\Web;
 
 use Slim\Http\Uri;
+use Wslim\Ioc;
 use Wslim\Common\Collection;
 use Wslim\Common\ErrorInfo;
 use Wslim\Common\ResponseInterface;
 use Wslim\Common\DataFormatter\XmlFormatter;
+use Wslim\Common\Config;
 use Wslim\Util\UriHelper;
 use Wslim\Util\HttpHelper;
-use Wslim\Ioc;
-use Wslim\Common\Config;
 use Wslim\Security\FormToken;
 
 /**
@@ -302,6 +302,14 @@ class Controller extends \Wslim\Common\Controller
         
         $view = $this->getView();
         
+        $client = $this->clientType ? : static::input('clienttype');
+        if ($client) {
+            $configs = Config::get('views', $this->getModule()->getName(), true);
+            if (isset($configs[$client]['theme'])) {
+                $view->setTheme($configs[$client]['theme']);
+            }
+        }
+        
         if (!$view->getBeginContent()) {
             $beginContent  = "<?php use Wslim\Ioc; ?>" . PHP_EOL;
             $view->setBeginContent($beginContent);
@@ -529,42 +537,6 @@ class Controller extends \Wslim\Common\Controller
         http_response_code($response_code);
         header("Location:" . $uri);
         exit;
-    }
-    
-    /**
-     * 自动路由客户端类型，第一次会判断客户端类型，并设置cookie[_clienttype]，此后只检测cookie
-     * pc端页面可以加入以下代码，访问移动端. 
-     * <p>
-     * ```
-     * <a href="{Ioc::url('mobile:')}" class="btn">访问手机版</a>
-     * ```
-     * </p>
-     */
-    protected function autoRouteClientType()
-    {
-        // client type is set
-        $clienttype = $this->input('_clienttype') ? : HttpHelper::getCookie('_clienttype');
-        
-        if (!$clienttype) {
-            $clientType = ClientType::detectClientType();
-            if ($clientType !== ClientType::PC && $clientType !== $this->getModule()->getName()) {
-                $path = ltrim($this->request->getUri()->getPath(), '/');
-                $parts = explode('/', $url, 2);
-                if ($parts[0] === $this->getModule()->getName()) {
-                    $url = Ioc::url($clientType . ':' . isset($parts[1]) ? $parts[1] : '');
-                } else {
-                    $url = Ioc::url($clientType . ':' . $path);
-                }
-                
-                HttpHelper::setCookie('_clienttype', $this->getModule()->getName(), 3600, null, UriHelper::GetRootDomain());
-                
-                $url = UriHelper::buildUrl($url, $this->request->getUri()->getQuery());
-                static::redirect($url);
-            }
-        } else {
-            $this->viewData('_clienttype', $clienttype);
-            HttpHelper::setCookie('_clienttype', $clienttype, 3600, null, UriHelper::GetRootDomain());
-        }
     }
     
     /**

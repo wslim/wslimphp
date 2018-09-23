@@ -6,10 +6,11 @@ use Wslim\Util\ArrayHelper;
 use Wslim\Util\UriHelper;
 
 /**
- * Config, support uniform config management.
+ * Config, support uniform config management. And support 'config-dev' dir, it can overwrite config, see load(). 
  * Methods: load(), get(), set() 
  * 
  * @author 28136957@qq.com
+ * @date   2018-01-12
  * @link   wslim.cn
  */
 class Config
@@ -94,7 +95,7 @@ class Config
      */
     public static function load($file='config', $name=null, $range=null)
     {
-        // 避免重复加载
+        // avoid repeated load
         $range = $range ?: static::$range;
         if (!isset(static::$loadedRanges[$range][$file])) {
             static::$loadedRanges[$range][$file] = 1;
@@ -204,7 +205,7 @@ class Config
     
     /**
      * get config, if no params it get all config
-     * @param  string   $name    support split by '.', example 'cache.storage'
+     * @param  string   $name    support split by '.' max 2, example 'views.mobile.theme'
      * @param  string   $range   range or loaded dir
      * @param  boolean  $inherit if not exists get inherit value
      * @return mixed
@@ -230,9 +231,14 @@ class Config
             }
         }
         
-        // if not exists get default range config
-        if ($value === null && $range !== self::$range && $inherit) {
-            $value = self::get($name, self::$range, false);
+        // if inherit get default range config  && 
+        if ($range !== self::$range && $inherit) {
+            if ($value === null) {
+                $value = self::get($name, self::$range, false);
+            } elseif (is_array($value)) {
+                $vd = self::get($name, self::$range, false);
+                $value = ArrayHelper::merge($vd, $value);
+            }
         }
         
         return $value;

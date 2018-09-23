@@ -17,6 +17,13 @@ interface EngineInterface
      *
      * @return string Parsed content
      */
-    public function parse(&$content);
+    public function parse(& $content);
+    
+    /**
+     * get layout from template content
+     * @param  string $content
+     * @return string|NULL
+     */
+    public function getLayout(& $content);
     
 }

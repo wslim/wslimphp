@@ -102,7 +102,7 @@ abstract class App extends Module
 	 */
 	protected function beforeInit()
 	{
-	    // load/set default config
+	    // load default config
 	    Config::setDefault(DefaultConfig::common());
 	    
 	    // load common config: /common/config/config.php
@@ -217,7 +217,7 @@ abstract class App extends Module
 	}
 	
 	/**
-	 * get current module parsed from uri
+	 * get current module, parsed from uri
 	 * 
 	 * @return \Wslim\Common\Module
 	 */
@@ -275,15 +275,18 @@ abstract class App extends Module
 	 */
 	public function isDefaultModule($module=null)
 	{
+	    $mname = '';
 	    if (!$module) {
-	        return $this->getCurrentModule()->getName() == $this->getDefaultModule()->getName();
-	    } elseif (is_string($module)) {
-	        return $module == $this->getDefaultModule()->getName();
-	    } elseif ($module instanceof Module) {
-	        return $module->getName() == $this->getDefaultModule()->getName();
+	        $mname = $this->getCurrentModule()->getName();
+	    } else {
+	        if (is_string($module)) {
+	            $mname = $module;
+	        } elseif ($module instanceof Module) {
+	            $mname = $module->getName();
+	        }
 	    }
 	    
-	    return false;
+	    return $mname == $this->getDefaultModule()->getName();
 	}
 	
 	/**

@@ -1,10 +1,10 @@
 <?php
-namespace Wslim\Web;
+namespace Wslim\Constant;
 
 use Wslim\Util\HttpHelper;
 
 /**
- * ClientType, pc|mobile|app|wx|wxapp|alipay|alipayapp
+ * ClientType, pc|mobile|wx|alipay
  * 
  * @author 28136957@qq.com
  * @link   wslim.cn
@@ -14,6 +14,7 @@ class ClientType
     const PC        = 'pc';
     const MOBILE    = 'mobile';
     const APP       = 'app';
+    
     /**
      * wx public
      * @var string
@@ -45,14 +46,15 @@ class ClientType
      * @return string
      */
     static public function formatClientType($clientType)   {
-        if (!in_array($clientType, array_keys(ClientType::getClientTypes()))) {
+        if (!in_array($clientType, array_keys(static::getClientTypes()))) {
             $clientType = 'pc';
         }
         return $clientType;
     }
     
     /**
-     * detect 
+     * detect client type, return pc|mobile|wx|alipay
+     * 
      * @return string
      */
     static public function detectClientType()

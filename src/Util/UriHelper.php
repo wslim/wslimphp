@@ -360,9 +360,13 @@ class UriHelper
 	 */
 	static public function GetRootDomain($domain=null) 
 	{
-	    $domain = !empty($domain) ? $domain : $_SERVER['HTTP_HOST'];
+	    $domain = !empty($domain) ? $domain : (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : null);
+	    if (!$domain) {
+	        return 'localhost';
+	    }
+	    
 	    $re_domain = '';
-	    $domain_postfix_cn_array = array("com", "net", "org", "gov", "edu", "com.cn", "cn");
+	    $domain_postfix_cn_array = array("com", "net", "org", "gov", "edu", "com.cn", "net.cn", "cn");
 	    $array_domain = explode(".", $domain);
 	    $array_num = count($array_domain) - 1;
 	    if ($array_domain[$array_num] == 'cn') {
@@ -384,9 +388,9 @@ class UriHelper
 	 */
 	static public function getSecondDomain($domain=null)
 	{
-	    $domain = !empty($domain) ? $domain : $_SERVER['HTTP_HOST'];
+	    $domain = !empty($domain) ? $domain : (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : null);
 	    $n = preg_match('/([^.]*\.)?([^.]*\.)?\w+\.\w+$/', $domain, $matches);
-	    return isset($matches[2]) ? $matches[2] : (isset($matches[1]) ? $matches[1] : '');
+	    return $domain && isset($matches[2]) ? $matches[2] : (isset($matches[1]) ? $matches[1] : '');
 	}
 	
 	/**
@@ -398,12 +402,14 @@ class UriHelper
 	{
 	    if (!$url || strpos($url, '://') === false) {
             $schema = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
-            $baseUrl = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : getenv('HTTP_HOST');
-            $baseUrl = $baseUrl ? $schema . $baseUrl : '';
+            $domain = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : getenv('HTTP_HOST');
+            $domain = static::GetRootDomain($domain);
+            $baseUrl = $domain ? $schema . $domain : '';
             $port = isset($_SERVER['SERVER_PORT']) ? $_SERVER['SERVER_PORT'] : null;
 	    } else {
 	        $parts = parse_url($url);
-	        $baseUrl = $parts['scheme'] . '://' . $parts['host'];
+	        $domain = static::GetRootDomain($parts['host']);
+	        $baseUrl = $parts['scheme'] . '://' . $domain;
 	        $port = isset($parts['port']) ? $parts['port'] : '';
 	    }
 	    if ($port && $port != 80 && $port != 443) {

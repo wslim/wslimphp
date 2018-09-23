@@ -1,5 +1,5 @@
 <?php
-$vendorPath = dirname(dirname(dirname(__DIR__))) . '/';
+$vendorPath = dirname(dirname(dirname(dirname(__DIR__)))) . '/vendor/';
 
 defined('ROOT_PATH') || define('ROOT_PATH', dirname($vendorPath));
 

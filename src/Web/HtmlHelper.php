@@ -391,120 +391,117 @@ class HtmlHelper
     
     /**
      * html list
-     * @param array $data
-     * @param array $settings
+     * @param array $data data-item: ['url'=>, 'title'=>, 'items'=>, ]
+     * @param array $settings        ['type'=>'list|tree|menu', 'ul_css'=>, 'li_css'=>, 'sub_ul_css'=>, 'sub_li_css'=>, 'fields'=>['id', 'parent_id', 'title'], 'checked'=>[]]
      * @return string
      */
     static public function list($data, $settings=array())
     {
-        if (!isset($settings['title_len']))  $settings['title_len']   = 10;
+        if (!$data) return '';
         
-        $out = '';
-        if ($data) foreach ($data as $v) {
-            $title = isset($v['title']) ? $v['title'] : (isset($v['name']) ? $v['name'] : '标题');
-            $url  = isset($v['url']) ? $v['url'] : '#';
-            $out .= '<a href="' . $url . '">' . StringHelper::str_cut($title, $settings['title_len']) . '</a>' . PHP_EOL;
+        if (!isset($settings['checked']))   $settings['checked']     = array();
+        if (!isset($settings['title_len'])) $settings['title_len']   = 15;
+        if (!isset($settings['type']))      $settings['type'] = 'list';
+        
+        $out = $pre_out = $suf_out = '';
+        switch ($settings['type']) {
+            case 'tree':
+                if (!isset($settings['ul_css']))     $settings['ul_css']        = "nav nav-list";
+                if (!isset($settings['sub_ul_css'])) $settings['sub_ul_css']    = "submenu nav-show";
+                
+                $pre_out = '<ul class="' . $settings['ul_css'] . '">' . PHP_EOL;
+                foreach ($data as $v) {
+                    $title = isset($v['title']) ? StringHelper::str_cut($v['title'], $settings['title_len']) : '标题';
+                    $url   = isset($v['url']) ? $v['url'] : 'javascript:;';
+                    
+                    $li_css = '';
+                    if ($settings['checked'] && in_array($v[$settings['fields'][0]], $settings['checked'])) {
+                        $li_css = ' class="checked"';
+                    }
+                    
+                    $out .= '<li' . $li_css . '>' . PHP_EOL;
+                    $out .= '    <a class="dropdown-toggle" data-toggle="dropdown" href="' . $url . '">' . PHP_EOL;
+                    $out .= '        <i class="menu-icon fa fa-caret-right"></i>' . PHP_EOL;
+                    $out .= '        ' . $title . PHP_EOL;
+                    $out .= '        <b class="arrow fa fa-angle-down"></b>' . PHP_EOL;
+                    $out .= '    </a>' . PHP_EOL;
+                    
+                    if (isset($v['items']) && $v['items']) {
+                        $settings['ul_css'] = $settings['sub_ul_css'];
+                        $out .= static::list($v['items'], $settings);
+                    }
+                    
+                    $out .= '</li>' . PHP_EOL;
+                }
+                $suf_out .= '</ul>' . PHP_EOL;
+                break;
+            case 'menu':
+                if (!isset($settings['ul_css']))     $settings['ul_css']      = "nav navbar-nav";
+                if (!isset($settings['li_css']))     $settings['li_css']      = "dropdown";
+                if (!isset($settings['sub_ul_css'])) $settings['sub_ul_css']  = "dropdown-menu";
+                if (!isset($settings['sub_li_css'])) $settings['sub_li_css']  = "dropdown-submenu";
+                
+                $pre_out = '<ul class="' . $settings['ul_css'] . '">' . PHP_EOL;
+                foreach ($data as $v) {
+                    $title = isset($v['title']) ? StringHelper::str_cut($v['title'], $settings['title_len']) : '标题';
+                    $url   = isset($v['url']) ? $v['url'] : 'javascript:;';
+                    
+                    $out  .= '<li class="' . $settings['li_css'] . '">' . PHP_EOL;
+                    if (isset($v['items']) && $v['items']) {
+                        $url   = 'javascript:;';  
+                        $out  .= '    <a class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" href="' . $url . '">' . $title . '<span class="caret"></span></a>' . PHP_EOL;
+                        
+                        $coptions = $settings;
+                        $coptions['ul_css'] = $settings['sub_ul_css'];
+                        $coptions['li_css'] = $settings['sub_li_css'];
+                        $out .= static::list($v['items'], $coptions);
+                    } else {
+                        $out  .= '    <a href="' . $url . '">' . $title . '</a>' . PHP_EOL;
+                    }
+                    $out .= '</li>' . PHP_EOL;
+                }
+                $suf_out .= '</ul>' . PHP_EOL;
+                break;
+            case 'list':
+            default:
+                foreach ($data as $v) {
+                    $title = isset($v['title']) ? StringHelper::str_cut($v['title'], $settings['title_len']) : '标题';
+                    $url   = isset($v['url']) ? $v['url'] : 'javascript:;';
+                    
+                    $out  .= '<a href="' . $url . '">' . $title . '</a>' . PHP_EOL;
+                }
+                break;
         }
-        return $out;
+        
+        return $pre_out . $out . $suf_out;
     }
     
+    /**
+     * html menu
+     * @param array $data data-item: ['url'=>, 'title'=>, 'items'=>, ]
+     * @param array $settings        ['type'=>'list|tree|menu', 'ul_css'=>, 'li_css'=>, 'sub_ul_css'=>, 'sub_li_css'=>, 'fields'=>['id', 'parent_id', 'title'], 'checked'=>[]]
+     * @return string
+     */
+    static public function menu($data, $settings=array())
+    {
+        if(!isset($settings['type'])) $settings['type'] = 'menu';
+        return static::list($data, $settings);
+    }
     
     /**
      * html tree
-     * @param array $data
+     * @param array $data data-item: ['url'=>, 'title'=>, 'items'=>[]]
      * @param array $settings
      * @return string
      */
     static public function tree($data, $settings=array())
     {
-        if (!isset($settings['ul_css']))     $settings['ul_css']      = "nav nav-list";
-        if (!isset($settings['sub_ul_css'])) $settings['sub_ul_css']  = "submenu nav-show";
-        if (!isset($settings['fields']))     $settings['fields']      = array('id', 'parent_id', 'title');
-        if (!isset($settings['url']))        $settings['url']         = Ioc::url('category?cat_id=');
-        if (!isset($settings['checked']))    $settings['checked'] = array();
-        
-        $out = '<ul class="' . $settings['ul_css'] . '">' . PHP_EOL;
-        if ($data) foreach ($data as $v) {
-            $url = $settings['url'] . $v[$settings['fields'][0]];
-            if (isset($v['items'])) $url = '#';
-            
-            $li_css = '';
-            if (in_array($v[$settings['fields'][0]], $settings['checked'])) {
-                $li_css = ' class="checked"';
-            }
-            
-            $out .= '<li' . $li_css . '>' . PHP_EOL;
-            $out .= '    <a class="dropdown-toggle" href="' . $url . '">' . PHP_EOL;
-            $out .= '        <i class="menu-icon fa fa-caret-right"></i>' . PHP_EOL;
-            $out .= '        ' . $v[$settings['fields'][2]] . PHP_EOL;
-            $out .= '        <b class="arrow fa fa-angle-down"></b>' . PHP_EOL;
-            $out .= '    </a>' . PHP_EOL;
-            
-            if (isset($v['items']) && $v['items']) {
-                $settings['ul_css'] = $settings['sub_ul_css'];
-                $out .= static::tree($v['items'], $settings);
-            }
-            
-            $out .= '</li>' . PHP_EOL;
-        }
-        $out .= '</ul>' . PHP_EOL;
-        
-        return $out;
+        if(!isset($settings['type'])) $settings['type'] = 'tree';
+        return static::list($data, $settings);
     }
     
     /**
-     * html menu
-     * @param  array $data item array: title/url/items
-     * @param  array $settings keys: ul_css/li_css/sub_ul_css/sub_li_css/fields/checked
-     * @return string
-     */
-    static public function menu($data, $settings=array())
-    {
-        if (!isset($settings['checked']))    $settings['checked']     = array();
-        if (!isset($settings['url']))        $settings['url']         = Ioc::url('category?cat_id=');
-        if (!isset($settings['title_len']))  $settings['title_len']   = 10;
-        
-        $type = isset($settings['type']) ? $settings['type'] : 'dropdown';
-        
-        $out = $pre_out = $suf_out = '';
-        if ($data) {
-            switch ($type) {
-                case 'dropdown':
-                    if (!isset($settings['ul_css']))     $settings['ul_css']      = "nav navbar-nav";
-                    if (!isset($settings['li_css']))     $settings['li_css']      = "dropdown";
-                    if (!isset($settings['sub_ul_css'])) $settings['sub_ul_css']  = "dropdown-menu";
-                    if (!isset($settings['sub_li_css'])) $settings['sub_li_css']  = "dropdown-submenu";
-                    
-                    $pre_out = '<ul class="' . $settings['ul_css'] . '">' . PHP_EOL;
-                    foreach ($data as $v) {
-                        $title = isset($v['title']) ? $v['title'] : (isset($v['name']) ? $v['name'] : '标题');
-                        $url  = isset($v['url']) ? $v['url'] : (isset($v['id']) ? $settings['url'] . $v['id'] : '#');
-                        $out .= '<li class="' . $settings['li_css'] . '">' . PHP_EOL;
-                        $out .= '    <a href="' . $url . '">' . StringHelper::str_cut($title, $settings['title_len']) . '</a>' . PHP_EOL;
-                        if (isset($v['items']) && $v['items']) {
-                            $coptions = $settings;
-                            $coptions['ul_css'] = $settings['sub_ul_css'];
-                            $coptions['li_css'] = $settings['sub_li_css'];
-                            $out .= static::menu($v['items'], $coptions);
-                        }
-                        $out .= '</li>' . PHP_EOL;
-                    }
-                    $suf_out .= '</ul>' . PHP_EOL;
-                    break;
-                default:
-                    foreach ($data as $v) {
-                        $title = isset($v['title']) ? $v['title'] : (isset($v['name']) ? $v['name'] : '标题');
-                        $url  = isset($v['url']) ? $v['url'] : (isset($v['id']) ? $settings['url'] . $v['id'] : '#');
-                        $out .= '<a href="' . $url . '">' . StringHelper::str_cut($title, $settings['title_len']) . '</a> ' . PHP_EOL;
-                    }    
-                    break;
-            }
-        }
-        return $pre_out . $out . $suf_out;
-    }
-    
-    /**
-     * html轮播图
+     * html slide
      * @param  array $data
      * @param  array $settings ['fields'=>['thumb', 'title', 'url'], 'css'=>'..', 'style'=>'...']
      * @return string

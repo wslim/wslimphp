@@ -2,12 +2,13 @@
 namespace Wslim\Common;
 
 use InvalidArgumentException;
+use Wslim\Ioc;
 use Wslim\Util\UriHelper;
 use Wslim\Util\StringHelper;
 use Wslim\Util\ArrayHelper;
-use Wslim\View\View;
-use Wslim\Ioc;
 use Wslim\Util\DataHelper;
+use Wslim\View\View;
+use Wslim\Constant\ClientType;
 
 /**
  * Module like as a sub app
@@ -34,7 +35,7 @@ class Module extends Component
 	 * alias
 	 * @var string
 	 */
-	public $alias;
+	protected $alias;
 	
 	/**
 	 * namespace
@@ -139,7 +140,7 @@ class Module extends Component
 		// 8. extend class init
 		$this->init();
 		
-		//Debugger::traceMemory($this->getLongName());
+		//Debugger::traceMemory($this->getName());
 	}
 	
 	/**
@@ -179,14 +180,15 @@ class Module extends Component
 	}
 	
 	/**
-	 * get module name
+	 * get module name, example 'home'
 	 * @return string
 	 */
 	public function getName()
 	{
 	    if (!isset($this->name)) {
-	        $this->name = $this->isApp() ? '' : basename($this->basePath);
+	        $this->name = $this->isApp() ? '' : trim(str_replace($this->basePath, '', $module['basePath']), '\\/');
 	    }
+	    
 	    return $this->name;
 	}
 	
@@ -202,12 +204,23 @@ class Module extends Component
 	}
 	
 	/**
-	 * get long name
+	 * get alias
 	 * @return string
 	 */
-	public function getLongName()
+	public function getAlias()
 	{
-	    return trim(str_replace(Config::getRootPath(), '', $this->basePath), '\\/');
+	    return $this->alias;
+	}
+	
+	/**
+	 * set alias
+	 * @param  string $alias
+	 * @return static
+	 */
+	public function setAlias($alias)
+	{
+	    $this->alias = $alias;
+	    return $this;
 	}
 	
 	/**
@@ -380,7 +393,6 @@ class Module extends Component
 	    $uid = 'module.' . $name;
 	    
 	    if ($this->hasModule($name)) {
-	        
 		    /* @var $module Module */
 	        return $this->get($uid);
 		} else {
@@ -429,9 +441,9 @@ class Module extends Component
 	        $module['class'] = '\\Wslim\\Common\\Module';
 	        
 	        if (is_numeric($name)) {
-	            $name = basename($module['basePath']);
+	            $name = str_replace($this->basePath, '', $module['basePath']);
 	        }
-	        $name = trim($name, '/');
+	        $name = trim($name, '\\/');
 	        $module['name'] = $name;
 	        $alias = isset($module['alias']) ? $module['alias'] : null;
 	    }
@@ -478,6 +490,7 @@ class Module extends Component
 	    $module    = isset($module) ? trim($module, '/') : '';
 	    $handler   = isset($handler) ? trim($handler, '/') : '';
 	    
+	    // has module and contain '/': 'demo/demo2'
 	    if ($module && strpos($module, '/')) {
 	        if ($handler === 'index') {
 	            $handler = '';
@@ -506,17 +519,22 @@ class Module extends Component
                 $mhandler = '';
             }
             $handler = $handler ? $mhandler . '/' . $handler : $mhandler;
-	        
-	        Ioc::logger('router')->debug(sprintf('[%s][find-m]%s:%s', UriHelper::getRelativeUrl(), $module, $handler));
-	        
+            
 	        if ($module && $moduleInstance = $this->getModule($module)) {
+	            Ioc::logger('router')->debug(sprintf('[find][m][%s]%s:%s', UriHelper::getRelativeUrl(), $module, $handler));
 	            return $moduleInstance->getController(null, $handler, $type);
 	        } else {
 	            return static::getController($module, $handler, $type);
 	        }
-	    } elseif ($module && $moduleInstance = $this->getModule($module)) {
+	    }
+	    // has module and not contain '/': 'demo'
+	    elseif ($module && $moduleInstance = $this->getModule($module)) {
+	        Ioc::logger('router')->debug(sprintf('[find][m][%s]%s:%s', UriHelper::getRelativeUrl(), $module, $handler));
+	        
 	        return $moduleInstance->getController(null, $handler, $type);
-	    } else {
+	    }
+	    // as controller 'a/b'+'c'
+	    else {
             // 如， /a/b 1) 先查找对应控制器 a/b， 2)不存在则查找 a/b/index， 3) 不存在当包含/时则查找 a并把b当作action，不含/时则找 index并把控制器名当作action
             $namespace  = $this->getNamespace();
             $handler = implode('/', [$module, $handler]);
@@ -524,7 +542,7 @@ class Module extends Component
 			$className  = Ioc::findClass($handler, $type, $namespace); 
 			$action = null; 
 			
-			Ioc::logger('router')->debug(sprintf('[%s][find-c]%s:%s', UriHelper::getRelativeUrl(), $this->getName(), $handler));
+			Ioc::logger('router')->debug(sprintf('[find][c][%s]%s:%s', UriHelper::getRelativeUrl(), $this->getName(), $handler));
 			
 			if (!$className) {
 			    if ($handler == 'index') {
@@ -533,7 +551,7 @@ class Module extends Component
 			    
 			    $indexClassName = Ioc::findClass($handler . '/index', $type, $namespace);
 			    
-			    Ioc::logger('router')->debug(sprintf('[%s][find-c]%s:%s', UriHelper::getRelativeUrl(), $this->getName(), $handler . '/index'));
+			    Ioc::logger('router')->debug(sprintf('[find][c][%s]%s:%s', UriHelper::getRelativeUrl(), $this->getName(), $handler . '/index'));
 			    
 			    if ($indexClassName) {
 					$handler    = $handler . '/index';
@@ -544,13 +562,13 @@ class Module extends Component
 				        $handler = substr($handler, 0, $pos); 
 				        $className  = Ioc::findClass($handler, $type, $namespace);
 				        
-				        Ioc::logger('router')->debug(sprintf('[%s][find-c]%s:%s', UriHelper::getRelativeUrl(), $this->getName(), $handler));
+				        Ioc::logger('router')->debug(sprintf('[find][c][%s]%s:%s', UriHelper::getRelativeUrl(), $this->getName(), $handler));
 				        
 				        if (!$className) {
 				            $handler .= '/index';
 				            $className = Ioc::findClass($handler, $type, $namespace);
 				            
-				            Ioc::logger('router')->debug(sprintf('[%s][find-c]%s:%s', UriHelper::getRelativeUrl(), $this->getName(), $handler));
+				            Ioc::logger('router')->debug(sprintf('[find][c][%s]%s:%s', UriHelper::getRelativeUrl(), $this->getName(), $handler));
 				            
 				            if (!$className) {
 				                return null;
@@ -561,7 +579,7 @@ class Module extends Component
 				        $handler = 'index';
 				        $className  = Ioc::findClass($handler, $type, $namespace);
 				        
-				        Ioc::logger('router')->debug(sprintf('[%s][find-c]%s:%s', UriHelper::getRelativeUrl(), $this->getName(), $handler));
+				        Ioc::logger('router')->debug(sprintf('[find][c][%s]%s:%s', UriHelper::getRelativeUrl(), $this->getName(), $handler));
 				        
 				        if (!$className) {
 				            return null;
@@ -597,27 +615,36 @@ class Module extends Component
 	public function getView()
 	{
 	    if (!$this->has('view')) {
-	        // 先获取本module设置的，再覆盖公共设置
-	        $config = Config::get('view', $this->getName());
+	        // first load current module, then overwrite common view config.
+	        $configs = Config::get('views', $this->getName(), true);
+	        
+	        if ($configs) {
+	            $client  = ClientType::detectClientType();
+	            if ($client === ClientType::PC) {
+	                $config = isset($configs['pc']) ? $configs['pc'] : [];
+	            } else {
+	                $config = isset($configs[$client]) ? $configs[$client] : (isset($configs['mobile']) ? $configs['mobile'] : (isset($configs['pc']) ? $configs['pc'] : []));
+	            }
+	        } else {
+	            $config = Config::get('view', $this->getName(), true);
+	        }
 	        
 	        if (!isset($config['templatePath'])) {
 	            $config['templatePath'] = $this->basePath . 'view';
 	        }
 	        if (!isset($config['compiledPath'])) {
-	            $config['compiledPath'] = rtrim(Config::getStoragePath(), '/') . '/view/' . ($this->getName()?:'_app') . '/';
+	            $config['compiledPath'] = rtrim(Config::getStoragePath(), '/') . '/app/' . $this->getName() . '/view';
 	            $config['compiledPath'] = str_replace('//', '/', $config['compiledPath']);
 	        }
 	        if (!isset($config['htmlPath'])) {
-	            $config['htmlPath'] = rtrim(Config::getCommon('view.htmlPath'), '/') . '/' . $this->getName() . '/';
+	            $config['htmlPath'] = rtrim(Config::getWebRootPath(), '/') . '/html/' . $this->getName();
 	            $config['htmlPath'] = str_replace('//', '/', $config['htmlPath']);
-	        }
-	        if (!isset($config['theme'])) {
-	            $config['theme'] = Config::getCommon('view.theme');
 	        }
 	        
 	        $object = new View($config);
 	        $this->set('view', $object);
 	    }
+	    
 	    return $this->get('view');
 	}
 	

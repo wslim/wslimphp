@@ -7,6 +7,7 @@ use Wslim\Util\File;
 use Wslim\Common\Component;
 use Wslim\Common\Collection;
 use Wslim\Common\Config;
+use Wslim\Util\ArrayHelper;
 
 /**
  * View
@@ -44,10 +45,11 @@ class View extends Component
 	        'templatePath' => '',
 	        'compiledPath' => 'view',
 	        'htmlPath'     => 'html',
-	        'theme'        => '',
+	        'theme'        => 'theme1',
 	        'layout'       => '',
+	        'nolayout'     => [],  // no layout template list
 	        'isCompiled'   => true,
-	        'begin_content'=>''
+	        'begin_content'=>'',
 	    );
 	}
 	
@@ -72,6 +74,8 @@ class View extends Component
 		        $this->options[$key] = $value;
 		    }
 		}
+		
+		$this->initViewConfig();
 		
 		$this->data = new Collection();
 	}
@@ -205,6 +209,7 @@ class View extends Component
 	{
 		return $this->options['layout'];
 	}
+	
 	/**
 	 * set theme dir
 	 * @param string $theme
@@ -212,7 +217,14 @@ class View extends Component
 	 */
 	public function setTheme($theme)
 	{
+	    $otheme = $this->options['theme'];
+	    
 		$this->options['theme'] = $theme;
+		
+		if ($otheme != $theme) {
+		    $this->initViewConfig();
+		}
+		
 		return $this;
 	}
 	/**
@@ -222,6 +234,15 @@ class View extends Component
 	public function getTheme()
 	{
 		return !empty($this->options['theme']) ? trim($this->options['theme'], '/') : '';
+	}
+	
+	public function initViewConfig()
+	{
+	    $cfile = $this->getTemplatePath() . '/' . ($this->getTheme() ? $this->getTheme() . '/' : '') . '_config.php';
+	    if ($cfile && is_file($cfile)) {
+	        $config = require $cfile;
+	        $this->options = ArrayHelper::merge($this->options, $config);
+	    }
 	}
 	
 	/**
@@ -308,7 +329,7 @@ class View extends Component
 	        return 'Template is not exists:' . $this->getTemplateRelativePath($template);
 	    }
 	    
-		// 页面绑定的变量
+		// view vars
 	    if ($this->getData()->keys()) {
 	        extract($this->getData()->all(), EXTR_SKIP);
 		}
@@ -319,12 +340,19 @@ class View extends Component
 		}
 		unset($vdata);
 		
-		if ($this->getLayout()) {
-			// layout template 
-			// 对于 phtml 模板: {include $__content_template__}
-		    // 对于 php 模板:   <?php include $this->include($__content_template__); ?\>
-			$__content_template__ = $template;
-			$template = $this->getLayout();
+		// layout
+		$_layout = static::getLayoutFromTemplate($template);
+		if (is_null($_layout)) {
+		    if ($this->getLayout() && $template !== $this->getLayout() && ($this->options['nolayout'] || !in_array($template, $this->options['nolayout']))) {
+		        // layout template
+		        // 对于 phtml 模板: {include $__content_template__}
+		        // 对于 php 模板:   <?php include $this->include($__content_template__); ?\>
+		        $__content_template__ = $template;
+		        $template = $this->getLayout();
+		    }
+		} elseif ($_layout) {
+		    $__content_template__ = $template;
+		    $template = $_layout;
 		}
 		
 		ob_start();
@@ -338,8 +366,8 @@ class View extends Component
 	
 	/**
 	 * parse content
-	 * @param string $content
-	 * @return string parsed content
+	 * @param  string $content
+	 * @return string
 	 */
 	public function parse(&$content)
 	{
@@ -348,8 +376,20 @@ class View extends Component
 	}
 	
 	/**
+	 * get layout from template
+	 * @param  string $template
+	 * @return string|NULL
+	 */
+	public function getLayoutFromTemplate($template)
+	{
+	    $content = file_get_contents($this->getTemplateFile($template));
+	    
+	    return $this->getEngineInstance()->getLayout($content);
+	}
+	
+	/**
 	 * 供模板引擎调用，用来包含子模板
-	 * @param string $template
+	 * @param  string $template
 	 * @return string
 	 */
 	public function template($template)
@@ -429,6 +469,7 @@ class View extends Component
 				
 				$content = file_get_contents($tplFile);
 				$content = $this->parse($content);
+				
 				$strlen = file_put_contents($tplCompiledFile, $content);
 				chmod ($tplCompiledFile, 0755);
 			}

@@ -532,19 +532,6 @@ class Ioc
 	}
 	
 	/**
-	 * get view instance
-	 * @param  string $name if assign name then find the named module
-	 * @return \Wslim\View\View
-	 */
-	static public function view($name=null)
-	{
-	    if ($name && $module = static::module($name)) {
-	        return $module->getView();
-	    }
-	    return static::app()->getCurrentModule()->getView();
-	}
-	
-	/**
 	 * get widget instance
 	 * @param  string $name
 	 * @return \Wslim\View\Widget|NULL

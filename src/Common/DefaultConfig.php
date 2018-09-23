@@ -100,6 +100,7 @@ class DefaultConfig
     static public function web()
     {
         $rootPath = Config::getRootPath();
+        $webRootPath = Config::getWebRootPath();
         
         return [
             'http'  => [
@@ -108,13 +109,15 @@ class DefaultConfig
             
             // uploadUrl, 上传的url, 可为 http 格式或相对根路径
             'uploadUrl'   => '/upload',
-            'uploadPath'  => $rootPath . 'webroot/upload',
+            'uploadPath'  => $webRootPath . 'upload',
             
             // need overwrite htmlPath/compiledPath/templatePath
-            'view'	=> array(
-                'htmlPath'	=> $rootPath . 'webroot/html',
-                'theme'		=> '', //'default'
-            ),
+            'views'	=> [
+                'pc'    => [
+                    //'htmlPath'	=> $webRootPath . 'html',
+                    'theme'		=> 'default',
+                ],
+            ],
             /*
             'widget'  => [
                 // cache options

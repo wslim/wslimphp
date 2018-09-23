@@ -375,8 +375,9 @@ abstract class AbstractRouter implements RouterInterface
 	 * @return static
 	 */
 	public function loadRoutes($config)
-	{		
-	    $allMethods = '*';  //['GET', 'POST'];
+	{
+	    $httpMethods = ['GET', 'POST', 'HEAD', 'PUT', 'DELETE', 'PATCH'];
+	    $allMethods = '*';  //['GET', 'POST', 'HEAD', 'PUT', 'DELETE', 'PATCH'];
 		
 	    $mArguments = [];
 	    if (isset($config['arguments'])) {
@@ -395,6 +396,10 @@ abstract class AbstractRouter implements RouterInterface
 				$pattern = str_replace('group:', '', $key);
 				$groups = explode('|', $pattern);
 				foreach ($groups as $v) {
+				    if ($mArguments) {
+				        $value['arguments'] = isset($value['arguments']) ? array_merge($mArguments, $value['arguments']) : $mArguments;
+				    }
+				    
 				    $v = '/' . trim(trim($v), '/');
 				    if ($v && $v !== '/') {
 				        $this->pushGroup($v, null);
@@ -410,24 +415,48 @@ abstract class AbstractRouter implements RouterInterface
 			
 			// 'pattern' => ...
 			$pattern     = '/' . ltrim($key, '/');
+			$methods     = $allMethods;
+			$callable    = null;
 			$arguments   = [];
 			if (is_string($value)) {
-				$methods  = $allMethods;
 				$callable = $value;
 			} elseif (is_array($value)) {
-				if (count($value) === 1) {
-					$methods   = $allMethods;
-					$callable  = $value[0];
+				if (isset($value[0])) {
+				    if (is_string($value[0])) {
+				        if (empty($value[0]) || $value[0] == '*') {
+				            $methods    = $allMethods;
+				            $callable   = isset($value[1]) ? $value[1] : null;
+				            $arguments  = isset($value[2]) ? $value[2] : [];
+				        } elseif (in_array(strtoupper($value[0]), $httpMethods)) {
+				            $methods    = $value[0];
+				            $callable   = isset($value[1]) ? $value[1] : null;
+				            $arguments  = isset($value[2]) ? $value[2] : [];
+				        } else {
+				            $callable   = $value[0];
+				            $arguments  = isset($value[1]) ? $value[1] : [];
+				        }
+				    } else {
+				        $methods    = $value[0];
+				        $callable   = isset($value[1]) ? $value[1] : null;
+				        $arguments  = isset($value[2]) ? $value[2] : [];
+				    }
 				} else {
-					$methods   = empty($value[0]) || $value[0] == '*' ? $allMethods : $value[0];
-					$callable  = $value[1];
-					$arguments = isset($value[2]) ? $value[2] : [];
+				    if (isset($value['method'])) {
+				        $methods    = $value['method'];
+				    }
+				    if (isset($value['callable'])) {
+				        $callable    = $value['callable'];
+				    }
+				    if (isset($value['arguments'])) {
+				        $arguments    = $value['arguments'];
+				    }
 				}
 				
 			} else {
 				$message = 'route config error.';
 				throw new InvalidConfigException($message);
 			}
+			$arguments = array_merge($mArguments, $arguments);
 			
 			// pattern replace
 			//$pattern = str_replace('{controller}', '{controller:[a-zA-Z0-9\_\/]+}', $pattern);

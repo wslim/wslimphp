@@ -20,6 +20,14 @@ class Controller implements ControllerInterface
 	use EventAwareTrait; 
 	
 	/**
+	 * default options
+	 * @var array
+	 */
+	static protected $defaultOptions = [
+	    'responseDataKey' => 'data',
+	];
+	
+	/**
 	 * @var \Wslim\Common\Module
 	 */
 	protected $module;
@@ -34,6 +42,12 @@ class Controller implements ControllerInterface
 	 * @var string
 	 */
 	protected $action;
+	
+	/**
+	 * clientType
+	 * @var string
+	 */
+	protected $clientType;
 	
     /**
      * http request
@@ -85,14 +99,6 @@ class Controller implements ControllerInterface
     private $stopped    = false;
     
     /**
-     * default options
-     * @var array
-     */
-    static protected $defaultOptions = [
-        'responseDataKey' => 'data',
-    ];
-    
-    /**
      * [overwrite] set events
      * @return array ['eventName' => 'callable']
      */
@@ -127,6 +133,10 @@ class Controller implements ControllerInterface
         return Ioc::app();
     }
     
+    /**
+     * get request method
+     * @return string
+     */
     final public function getRequestMethod()
     {
         $request || $request = static::getApp()->getRequest();
@@ -244,6 +254,20 @@ class Controller implements ControllerInterface
     {
         $name = ($this->module ? $this->module->getName() . '/' : '') . $this->getName();
         return $this->action ? $name . '/' . $this->getAction() : $name;
+    }
+    
+    final public function getClientType()
+    {
+        return $this->clientType;
+    }
+    
+    /**
+     * {@inheritDoc}
+     * @see ControllerInterface::setClientType()
+     */
+    final public function setClientType($clientType)
+    {
+        $this->clientType = $clientType;
     }
     
     /**
