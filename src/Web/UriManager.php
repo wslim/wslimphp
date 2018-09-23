@@ -59,7 +59,7 @@ class UriManager
                     $baseUrl = Config::getRootUrl($baseUrl);
                 }
                 
-                $path = rtrim($baseUrl, '/') . ($path ? '/' . trim($path, '/') : '');
+                $path = rtrim($baseUrl, '/') . ($path ? '/' . ltrim($path, '/') : '');
             }
             
         } else {
@@ -86,7 +86,7 @@ class UriManager
                     }
                 }
                 
-                $path = rtrim($baseUrl, '/') . ($path ? '/' . trim($path, '/') : '');
+                $path = rtrim($baseUrl, '/') . ($path ? '/' . ltrim($path, '/') : '');
             }
         }
         
@@ -101,7 +101,7 @@ class UriManager
         }
         
         $paths = explode('?', $path, 2);
-        if (strlen($paths[0]) - strrpos($paths[0], '.') > 5) {
+        if ($paths[0] && substr($paths[0], -1) != '/' && strlen($paths[0]) - strrpos($paths[0], '.') > 5) {
             $path = rtrim($paths[0], '/') . '.html' . (isset($paths[1]) ? '?' . $paths[1] : '');
         }
         
